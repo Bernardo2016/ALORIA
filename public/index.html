@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aloria PMS — Sistema de Gestión Hotelera</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/locales/es.global.min.js"></script>
+</head>
+<body>
+
+    <!-- ==========================================
+         PANTALLA DE AUTENTICACIÓN (LOGIN)
+         ========================================== -->
+    <section id="seccionLogin" class="login-wrapper">
+        <div class="login-hero">
+            <div class="login-brand">
+                <div class="brand-mark">A</div>
+                <div>
+                    <div class="brand-name">ALORIA</div>
+                    <div class="brand-sub">Hospitality Suite &amp; PMS</div>
+                </div>
+            </div>
+
+            <div class="login-hero-copy">
+                <div class="login-pill">Plataforma Centralizada de Operación Hotelera</div>
+                <h1>Control integral de recepción, reservas y finanzas.</h1>
+                <p>
+                    Administra la disponibilidad en tiempo real, agenda reservaciones futuras sin traslapes,
+                    supervisa indicadores financieros y gestiona el talento de Hotel Aloria desde un solo lugar.
+                </p>
+            </div>
+
+            <div class="login-features">
+                <div class="login-feature-item">
+                    <strong>Front Desk</strong>
+                    <span>Check-In y Check-Out transaccional</span>
+                </div>
+                <div class="login-feature-item">
+                    <strong>Calendario</strong>
+                    <span>Control visual anti-empalmes</span>
+                </div>
+                <div class="login-feature-item">
+                    <strong>Gerencia &amp; RRHH</strong>
+                    <span>Métricas y nómina por rol</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="login-panel">
+            <div class="login-card">
+                <h2>Iniciar Sesión</h2>
+                <p class="login-desc">Ingresa tus credenciales corporativas para acceder a tu panel.</p>
+
+                <form id="formLogin" style="display: flex; flex-direction: column; gap: 16px;">
+                    <div class="form-group">
+                        <label for="loginCorreo">Correo Corporativo</label>
+                        <input type="email" id="loginCorreo" placeholder="usuario@hotelaloria.mx" required autocomplete="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Contraseña</label>
+                        <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
+                    </div>
+                    <button type="submit" id="btnLogin" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 6px;">
+                        Ingresar al Sistema
+                    </button>
+                </form>
+
+                <div id="mensajeLogin" class="alert-error oculto"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         APLICACIÓN PRINCIPAL (SIDEBAR + TOPBAR)
+         ========================================== -->
+    <div id="contenedorPrincipal" class="app-shell oculto">
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-mark" style="width: 38px; height: 38px; font-size: 17px;">A</div>
+                <div>
+                    <div class="brand-name" style="font-size: 18px;">ALORIA</div>
+                    <div class="brand-sub" style="font-size: 10px;">Hotel PMS</div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-label">Módulos Disponibles</div>
+
+                <button type="button" id="navGerencia" class="nav-item oculto" data-view="vistaGerencia">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>
+                    </svg>
+                    <span>Panel Gerencial</span>
+                </button>
+
+                <button type="button" id="navRecepcion" class="nav-item oculto" data-view="vistaRecepcion">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9v.01"/><path d="M9 12v.01"/><path d="M9 15v.01"/>
+                    </svg>
+                    <span>Habitaciones &amp; Front Desk</span>
+                </button>
+
+                <button type="button" id="navCalendario" class="nav-item oculto" data-view="vistaCalendario">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>
+                    </svg>
+                    <span>Calendario de Reservaciones</span>
+                </button>
+
+                <button type="button" id="navRRHH" class="nav-item oculto" data-view="vistaRRHH">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    <span>Nóminas &amp; Personal</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-card">
+                    <div class="user-avatar" id="avatarIniciales">AL</div>
+                    <div class="user-meta">
+                        <div class="user-name" id="nombreUsuarioSidebar">Usuario</div>
+                        <div class="user-role" id="rolUsuarioSidebar">Rol</div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-ghost-danger btn-sm" onclick="cerrarSesion()">
+                    Cerrar Sesión
+                </button>
+            </div>
+        </aside>
+
+        <div class="main-area">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button type="button" id="btnMenuMovil" class="mobile-menu-btn" aria-label="Abrir menú">
+                        ☰
+                    </button>
+                    <div>
+                        <h1 class="page-title" id="tituloVista">Panel de Control</h1>
+                        <div class="page-subtitle" id="subtituloVista">Operación diaria del hotel</div>
+                    </div>
+                </div>
+
+                <div class="topbar-right">
+                    <span class="date-chip" id="fechaActualChip"></span>
+                    <button type="button" id="btnNuevaReservaTop" class="btn btn-gold btn-sm oculto" onclick="abrirModalNuevaReserva()">
+                        + Nueva Reservación
+                    </button>
+                </div>
+            </header>
+
+            <main class="content-body">
+
+                <!-- ==========================================
+                     VISTA 1: GERENCIA (DASHBOARD Y GRÁFICAS)
+                     ========================================== -->
+                <section id="vistaGerencia" class="oculto">
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Disponibilidad Actual</span>
+                                <span class="kpi-dot" style="background: var(--emerald-600);"></span>
+                            </div>
+                            <div class="kpi-value tabular-nums" id="kpiDisponiblesGerencia">--</div>
+                            <div class="kpi-foot" id="kpiTotalHabitaciones">De -- habitaciones totales</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Ingresos Estimados</span>
+                                <span class="kpi-dot" style="background: var(--navy-900);"></span>
+                            </div>
+                            <div class="kpi-value tabular-nums" id="kpiIngresos">$0</div>
+                            <div class="kpi-foot">Reservas activas y finalizadas</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Costos Operativos</span>
+                                <span class="kpi-dot" style="background: var(--rose-600);"></span>
+                            </div>
+                            <div class="kpi-value tabular-nums" id="kpiCostos">$0</div>
+                            <div class="kpi-foot">Gastos registrados de operación</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Balance Proyectado</span>
+                                <span class="kpi-dot" style="background: var(--gold-500);"></span>
+                            </div>
+                            <div class="kpi-value tabular-nums" id="kpiUtilidad">$0</div>
+                            <div class="kpi-foot">Ingresos menos costos operativos</div>
+                        </div>
+                    </div>
+
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <h3>Ocupación de Habitaciones</h3>
+                            <p>Distribución actual por estado operativo</p>
+                            <div class="chart-canvas-wrap">
+                                <canvas id="graficoOcupacion"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Balance General</h3>
+                            <p>Comparativa de ingresos vs. costos</p>
+                            <div class="chart-canvas-wrap">
+                                <canvas id="graficoFinanzas"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Rendimiento de Paquetes</h3>
+                            <p>Servicios adicionales más contratados</p>
+                            <div class="chart-canvas-wrap">
+                                <canvas id="graficoPaquetes"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==========================================
+                     VISTA 2: RECEPCIÓN (HABITACIONES & FRONT DESK)
+                     ========================================== -->
+                <section id="vistaRecepcion" class="oculto">
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Total Habitaciones</span>
+                                <span class="kpi-dot" style="background: var(--navy-900);"></span>
+                            </div>
+                            <div class="kpi-value tabular-nums" id="kpiHabTotal">0</div>
+                            <div class="kpi-foot">Inventario registrado</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Disponibles</span>
+                                <span class="kpi-dot" style="background: var(--emerald-600);"></span>
+                            </div>
+                            <div class="kpi-value tabular-nums" id="kpiHabDisponibles">0</div>
+                            <div class="kpi-foot">Listas para Check-In</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Ocupadas</span>
+                                <span class="kpi-dot" style="background: var(--rose-600);"></span>
+                            </div>
+                            <div class="kpi-value tabular-nums" id="kpiHabOcupadas">0</div>
+                            <div class="kpi-foot">Estancias en curso</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Limpieza / Mant.</span>
+                                <span class="kpi-dot" style="background: var(--amber-600);"></span>
+                            </div>
+                            <div class="kpi-value tabular-nums" id="kpiHabLimpieza">0</div>
+                            <div class="kpi-foot">En preparación o revisión</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h2 class="card-title">Control de Habitaciones</h2>
+                                <p class="card-subtitle">Realiza Check-In inmediato (Walk-In), Check-Out o libera habitaciones en limpieza.</p>
+                            </div>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="cargarHabitaciones()">
+                                Actualizar Estado
+                            </button>
+                        </div>
+
+                        <div class="toolbar">
+                            <div class="filter-pills" id="filtrosHabitaciones">
+                                <button type="button" class="filter-pill active" data-estado="Todas">Todas</button>
+                                <button type="button" class="filter-pill" data-estado="Disponible">Disponible</button>
+                                <button type="button" class="filter-pill" data-estado="Ocupada">Ocupada</button>
+                                <button type="button" class="filter-pill" data-estado="En Limpieza">En Limpieza</button>
+                                <button type="button" class="filter-pill" data-estado="Mantenimiento">Mantenimiento</button>
+                            </div>
+                            <input type="search" id="buscarHabitacion" class="search-input" placeholder="Buscar habitación, tipo o categoría...">
+                        </div>
+
+                        <div class="table-responsive">
+                            <table id="tablaHabitaciones">
+                                <thead>
+                                    <tr>
+                                        <th>Habitación</th>
+                                        <th>Piso</th>
+                                        <th>Tipo y Categoría</th>
+                                        <th>Estado</th>
+                                        <th>Tarifa Base</th>
+                                        <th>Acciones de Recepción</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==========================================
+                     VISTA 3: CALENDARIO INTERACTIVO Y RESERVACIONES
+                     ========================================== -->
+                <section id="vistaCalendario" class="oculto">
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h2 class="card-title">Calendario de Reservaciones</h2>
+                                <p class="card-subtitle">Haz clic o arrastra sobre las fechas para agendar, o selecciona un evento para ver detalles y hacer Check-In.</p>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                                <div class="calendar-legend">
+                                    <span class="legend-item"><span class="legend-swatch" style="background: #4f46e5;"></span>Confirmada</span>
+                                    <span class="legend-item"><span class="legend-swatch" style="background: #059669;"></span>En curso</span>
+                                    <span class="legend-item"><span class="legend-swatch" style="background: #64748b;"></span>Finalizada</span>
+                                    <span class="legend-item"><span class="legend-swatch" style="background: #e11d48;"></span>Cancelada</span>
+                                </div>
+                                <button type="button" class="btn btn-gold btn-sm" onclick="abrirModalNuevaReserva()">
+                                    + Agendar Reservación
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="calendarioReservaciones"></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h2 class="card-title">Listado de Reservaciones</h2>
+                                <p class="card-subtitle">Convierte reservaciones confirmadas a «En curso» al momento del Check-In del huésped.</p>
+                            </div>
+                        </div>
+
+                        <div class="toolbar">
+                            <div class="filter-pills" id="filtrosReservaciones">
+                                <button type="button" class="filter-pill active" data-estado="Todas">Todas</button>
+                                <button type="button" class="filter-pill" data-estado="Confirmada">Confirmadas</button>
+                                <button type="button" class="filter-pill" data-estado="En curso">En curso</button>
+                                <button type="button" class="filter-pill" data-estado="Finalizada">Finalizadas</button>
+                                <button type="button" class="filter-pill" data-estado="Cancelada">Canceladas</button>
+                            </div>
+                            <input type="search" id="buscarReservacion" class="search-input" placeholder="Buscar huésped, INE o habitación...">
+                        </div>
+
+                        <div class="table-responsive">
+                            <table id="tablaReservaciones">
+                                <thead>
+                                    <tr>
+                                        <th>Folio</th>
+                                        <th>Huésped</th>
+                                        <th>Habitación</th>
+                                        <th>Entrada / Salida</th>
+                                        <th>Paquete</th>
+                                        <th>Total Est.</th>
+                                        <th>Estado</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==========================================
+                     VISTA 4: RECURSOS HUMANOS (NÓMINAS Y ALTAS)
+                     ========================================== -->
+                <section id="vistaRRHH" class="oculto">
+                    <div class="kpi-grid kpi-grid-3">
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Personal Activo</span>
+                                <span class="kpi-dot" style="background: var(--navy-900);"></span>
+                            </div>
+                            <div class="kpi-value tabular-nums" id="kpiTotalEmpleados">0</div>
+                            <div class="kpi-foot">Colaboradores en plantilla</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Nómina Mensual Total</span>
+                                <span class="kpi-dot" style="background: var(--gold-500);"></span>
+                            </div>
+                            <div class="kpi-value tabular-nums" id="kpiNominaMensual">$0</div>
+                            <div class="kpi-foot">Suma de sueldos asignados</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Áreas Operativas</span>
+                                <span class="kpi-dot" style="background: var(--emerald-600);"></span>
+                            </div>
+                            <div class="kpi-value tabular-nums" id="kpiPuestosActivos">3</div>
+                            <div class="kpi-foot">Recepción, Gerencia y RRHH</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h2 class="card-title">Gestión de Nóminas</h2>
+                                <p class="card-subtitle">Consulta de sueldos y puestos del personal registrado en el sistema.</p>
+                            </div>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="cargarNominas()">
+                                Actualizar Nóminas
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="tablaNominas">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nombre Completo</th>
+                                        <th>Correo Corporativo</th>
+                                        <th>Rol / Área</th>
+                                        <th>Sueldo Mensual</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h2 class="card-title">Contratar Nuevo Personal</h2>
+                                <p class="card-subtitle">Registra un nuevo colaborador con acceso cifrado y tabulador salarial automático.</p>
+                            </div>
+                        </div>
+
+                        <form id="formNuevoEmpleado" class="form-grid form-grid-3">
+                            <div class="form-group">
+                                <label for="nombreEmp">Nombre</label>
+                                <input type="text" id="nombreEmp" placeholder="Ej. Sofía" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="apellidoEmp">Apellido</label>
+                                <input type="text" id="apellidoEmp" placeholder="Ej. Mendoza" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="correoEmp">Correo Corporativo</label>
+                                <input type="email" id="correoEmp" placeholder="usuario@hotelaloria.mx" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="passwordEmp">Contraseña Temporal</label>
+                                <input type="password" id="passwordEmp" placeholder="Mínimo 6 caracteres" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="rolEmp">Rol en Sistema</label>
+                                <select id="rolEmp" required>
+                                    <option value="Recepcion">Recepción</option>
+                                    <option value="Gerencia">Gerencia</option>
+                                    <option value="Recursos Humanos">Recursos Humanos</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="justify-content: flex-end;">
+                                <label>&nbsp;</label>
+                                <button type="submit" class="btn btn-success">Registrar en Sistema</button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         MODAL 1: CHECK-IN INMEDIATO (WALK-IN)
+         ========================================== -->
+    <div id="modalCheckIn" class="modal-backdrop oculto">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Check-In Inmediato (Walk-In)</h3>
+                <button type="button" class="modal-close" onclick="cerrarModal('modalCheckIn')">&times;</button>
+            </div>
+            <form id="formCheckIn">
+                <div class="modal-body">
+                    <input type="hidden" id="habSeleccionada">
+                    <div class="form-grid">
+                        <div class="form-group full-span">
+                            <label>Habitación Seleccionada</label>
+                            <input type="text" id="habDisplayCheckIn" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="ineHuesped">INE / Identificación</label>
+                            <input type="text" id="ineHuesped" placeholder="INE1234567890" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="telefonoHuespedCheckIn">Teléfono (Opcional)</label>
+                            <input type="text" id="telefonoHuespedCheckIn" placeholder="5512345678">
+                        </div>
+                        <div class="form-group">
+                            <label for="nombreHuesped">Nombre</label>
+                            <input type="text" id="nombreHuesped" placeholder="Nombre del huésped" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="apellidoHuesped">Apellido</label>
+                            <input type="text" id="apellidoHuesped" placeholder="Apellido del huésped" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="fechaFinCheckIn">Fecha de Salida</label>
+                            <input type="date" id="fechaFinCheckIn" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="numHuespedesCheckIn">Número de Huéspedes</label>
+                            <input type="number" id="numHuespedesCheckIn" min="1" max="8" value="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="paqueteCheckIn">Paquete Opcional</label>
+                            <select id="paqueteCheckIn">
+                                <option value="">Sin paquete adicional</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="costoSugerido">Costo Estimado ($ MXN)</label>
+                            <input type="number" id="costoSugerido" step="0.01" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="cerrarModal('modalCheckIn')">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Confirmar Check-In</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         MODAL 2: NUEVA RESERVACIÓN FUTURA
+         ========================================== -->
+    <div id="modalNuevaReserva" class="modal-backdrop oculto">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Agendar Nueva Reservación</h3>
+                <button type="button" class="modal-close" onclick="cerrarModal('modalNuevaReserva')">&times;</button>
+            </div>
+            <form id="formNuevaReserva">
+                <div class="modal-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="resFechaInicio">Fecha de Entrada</label>
+                            <input type="date" id="resFechaInicio" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="resFechaFin">Fecha de Salida</label>
+                            <input type="date" id="resFechaFin" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="resNumHuespedes">Número de Huéspedes</label>
+                            <input type="number" id="resNumHuespedes" min="1" max="10" value="2" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="resPaquete">Paquete Adicional (Opcional)</label>
+                            <select id="resPaquete">
+                                <option value="">Sin paquete ($0)</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-span">
+                            <label for="resHabitacion">Habitación Disponible en el Rango</label>
+                            <select id="resHabitacion" required>
+                                <option value="">Selecciona fechas válidas primero...</option>
+                            </select>
+                            <small id="resDisponibilidadHint" style="color: var(--slate-500); font-size: 12px;"></small>
+                        </div>
+                        <div class="form-group">
+                            <label for="resIne">INE del Huésped</label>
+                            <input type="text" id="resIne" placeholder="INE1234567890" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="resTelefono">Teléfono (Opcional)</label>
+                            <input type="text" id="resTelefono" placeholder="5512345678">
+                        </div>
+                        <div class="form-group">
+                            <label for="resNombre">Nombre</label>
+                            <input type="text" id="resNombre" placeholder="Nombre" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="resApellido">Apellido</label>
+                            <input type="text" id="resApellido" placeholder="Apellido" required>
+                        </div>
+                    </div>
+
+                    <div class="summary-box">
+                        <div>
+                            <div style="font-size: 12px; font-weight: 600; color: var(--amber-700);">Resumen Estimado</div>
+                            <div id="resResumenCalculo" style="font-size: 13px; color: var(--navy-700);">Selecciona fechas y habitación</div>
+                        </div>
+                        <div class="summary-total tabular-nums" id="resTotalEstimado">$0.00</div>
+                    </div>
+
+                    <div id="errorNuevaReserva" class="alert-error oculto"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="cerrarModal('modalNuevaReserva')">Cancelar</button>
+                    <button type="submit" id="btnGuardarReserva" class="btn btn-gold">Agendar Reservación</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         MODAL 3: DETALLE DE RESERVACIÓN
+         ========================================== -->
+    <div id="modalDetalleReserva" class="modal-backdrop oculto">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div>
+                    <h3 id="detTitulo">Reservación</h3>
+                </div>
+                <button type="button" class="modal-close" onclick="cerrarModal('modalDetalleReserva')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+                    <span id="detEstadoBadge" class="badge"></span>
+                    <span id="detTotal" class="tabular-nums" style="font-size: 20px; font-weight: 700; color: var(--navy-900);"></span>
+                </div>
+                <div class="detail-grid" id="detGrid"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="cerrarModal('modalDetalleReserva')">Cerrar</button>
+                <button type="button" id="btnCancelarReserva" class="btn btn-danger oculto">Cancelar Reservación</button>
+                <button type="button" id="btnCheckInReserva" class="btn btn-success oculto">Realizar Check-In</button>
+                <button type="button" id="btnCheckOutReserva" class="btn btn-danger oculto">Procesar Check-Out</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenedor de notificaciones Toast -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>
