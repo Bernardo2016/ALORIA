@@ -559,17 +559,27 @@ app.post('/api/checkout', async (req, res) => {
 // ==========================================
 app.post('/api/empleados', async (req, res) => {
     const { nombre, apellido, correo, password, rol } = req.body;
+    if (!nombre || !apellido || !correo || !password || !rol) {
+        return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+    }
+
     try {
         const passwordHash = await bcrypt.hash(password, 10);
 
-        let idNomina = 1; // Recepción por defecto
-        if (rol === 'Gerencia') idNomina = 2;
-        else if (rol === 'Recursos Humanos') idNomina = 3;
+        const [nominaRows] = await db.query(
+            'SELECT id_nomina FROM Nomina WHERE tipo_puesto = ? LIMIT 1',
+            [rol]
+        );
+        let idNomina = nominaRows.length > 0 ? nominaRows[0].id_nomina : 1;
+        if (nominaRows.length === 0) {
+            if (rol === 'Gerencia') idNomina = 2;
+            else if (rol === 'Recursos Humanos') idNomina = 3;
+        }
 
         const query = `INSERT INTO Empleados (nombre, apellido, correo, id_nomina, password_hash, rol) 
                        VALUES (?, ?, ?, ?, ?, ?)`;
 
-        await db.query(query, [nombre, apellido, correo, idNomina, passwordHash, rol]);
+        await db.query(query, [nombre.trim(), apellido.trim(), correo.trim(), idNomina, passwordHash, rol]);
         res.status(201).json({ message: 'Trabajador registrado exitosamente' });
     } catch (error) {
         console.error('Error en POST /api/empleados:', error);
@@ -577,6 +587,79 @@ app.post('/api/empleados', async (req, res) => {
             return res.status(409).json({ error: 'Ya existe un empleado registrado con ese correo' });
         }
         res.status(500).json({ error: 'Error en el servidor al registrar' });
+    }
+});
+
+app.put('/api/empleados/:id', async (req, res) => {
+    const { id } = req.params;
+    const { nombre, apellido, correo, rol, sueldo, password } = req.body;
+
+    if (!nombre || !apellido || !correo || !rol) {
+        return res.status(400).json({ error: 'Nombre, apellido, correo y rol son obligatorios' });
+    }
+
+    try {
+        const [nominaRows] = await db.query(
+            'SELECT id_nomina FROM Nomina WHERE tipo_puesto = ? LIMIT 1',
+            [rol]
+        );
+        let idNomina = nominaRows.length > 0 ? nominaRows[0].id_nomina : 1;
+        if (nominaRows.length === 0) {
+            if (rol === 'Gerencia') idNomina = 2;
+            else if (rol === 'Recursos Humanos') idNomina = 3;
+        }
+
+        // Actualizar tabulador salarial si se modificó el monto
+        if (sueldo !== undefined && sueldo !== '' && !isNaN(Number(sueldo))) {
+            await db.query(
+                'UPDATE Nomina SET sueldo = ? WHERE id_nomina = ?',
+                [Number(sueldo), idNomina]
+            );
+        }
+
+        let result;
+        if (password && String(password).trim() !== '') {
+            const passwordHash = await bcrypt.hash(String(password).trim(), 10);
+            [result] = await db.query(
+                `UPDATE Empleados 
+                 SET nombre = ?, apellido = ?, correo = ?, rol = ?, id_nomina = ?, password_hash = ?
+                 WHERE id_empleado = ?`,
+                [nombre.trim(), apellido.trim(), correo.trim(), rol, idNomina, passwordHash, id]
+            );
+        } else {
+            [result] = await db.query(
+                `UPDATE Empleados 
+                 SET nombre = ?, apellido = ?, correo = ?, rol = ?, id_nomina = ?
+                 WHERE id_empleado = ?`,
+                [nombre.trim(), apellido.trim(), correo.trim(), rol, idNomina, id]
+            );
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Colaborador no encontrado' });
+        }
+
+        res.json({ message: 'Información del colaborador actualizada correctamente' });
+    } catch (error) {
+        console.error('Error en PUT /api/empleados/:id:', error);
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({ error: 'Ese correo corporativo ya pertenece a otro colaborador' });
+        }
+        res.status(500).json({ error: 'Error al actualizar la información del colaborador' });
+    }
+});
+
+app.delete('/api/empleados/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const [result] = await db.query('DELETE FROM Empleados WHERE id_empleado = ?', [id]);
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Colaborador no encontrado' });
+        }
+        res.json({ message: 'Colaborador dado de baja correctamente' });
+    } catch (error) {
+        console.error('Error en DELETE /api/empleados/:id:', error);
+        res.status(500).json({ error: 'Error al eliminar el colaborador' });
     }
 });
 
@@ -593,6 +676,16 @@ app.get('/api/nominas', async (req, res) => {
     } catch (error) {
         console.error('Error en GET /api/nominas:', error);
         res.status(500).json({ error: 'Error al consultar las nóminas' });
+    }
+});
+
+app.get('/api/tabulador-nomina', async (req, res) => {
+    try {
+        const [rows] = await db.query('SELECT id_nomina, tipo_puesto, sueldo FROM Nomina ORDER BY id_nomina ASC');
+        res.json(rows);
+    } catch (error) {
+        console.error('Error en GET /api/tabulador-nomina:', error);
+        res.status(500).json({ error: 'Error al consultar el tabulador de nómina' });
     }
 });
 
