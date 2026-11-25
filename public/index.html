@@ -400,7 +400,7 @@
                         <div class="card-header">
                             <div>
                                 <h2 class="card-title">Gestión de Nóminas</h2>
-                                <p class="card-subtitle">Consulta de sueldos y puestos del personal registrado en el sistema.</p>
+                                <p class="card-subtitle">Consulta, edición de datos, puestos y tabulador salarial del personal registrado.</p>
                             </div>
                             <button type="button" class="btn btn-outline btn-sm" onclick="cargarNominas()">
                                 Actualizar Nóminas
@@ -415,6 +415,7 @@
                                         <th>Correo Corporativo</th>
                                         <th>Rol / Área</th>
                                         <th>Sueldo Mensual</th>
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody></tbody>
@@ -625,6 +626,58 @@
                 <button type="button" id="btnCheckInReserva" class="btn btn-success oculto">Realizar Check-In</button>
                 <button type="button" id="btnCheckOutReserva" class="btn btn-danger oculto">Procesar Check-Out</button>
             </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         MODAL 4: EDITAR COLABORADOR (RRHH / GERENCIA)
+         ========================================== -->
+    <div id="modalEditarEmpleado" class="modal-backdrop oculto">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="tituloModalEditarEmp">Editar Colaborador</h3>
+                <button type="button" class="modal-close" onclick="cerrarModal('modalEditarEmpleado')">&times;</button>
+            </div>
+            <form id="formEditarEmpleado">
+                <div class="modal-body">
+                    <input type="hidden" id="editEmpId">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="editEmpNombre">Nombre</label>
+                            <input type="text" id="editEmpNombre" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editEmpApellido">Apellido</label>
+                            <input type="text" id="editEmpApellido" required>
+                        </div>
+                        <div class="form-group full-span">
+                            <label for="editEmpCorreo">Correo Corporativo</label>
+                            <input type="email" id="editEmpCorreo" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editEmpRol">Rol / Área</label>
+                            <select id="editEmpRol" required>
+                                <option value="Recepcion">Recepción</option>
+                                <option value="Recursos Humanos">Recursos Humanos</option>
+                                <option value="Gerencia">Gerencia</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editEmpSueldo">Sueldo Mensual ($ MXN)</label>
+                            <input type="number" id="editEmpSueldo" step="0.01" min="0" required>
+                        </div>
+                        <div class="form-group full-span">
+                            <label for="editEmpPassword">Nueva Contraseña (Opcional)</label>
+                            <input type="password" id="editEmpPassword" placeholder="Dejar en blanco para conservar la contraseña actual">
+                        </div>
+                    </div>
+                    <div id="errorEditarEmpleado" class="alert-error oculto"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="cerrarModal('modalEditarEmpleado')">Cancelar</button>
+                    <button type="submit" id="btnGuardarEdicionEmp" class="btn btn-gold">Guardar Cambios</button>
+                </div>
+            </form>
         </div>
     </div>
 

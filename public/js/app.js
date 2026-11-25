@@ -9,6 +9,7 @@ const state = {
     paquetes: [],
     reservaciones: [],
     nominas: [],
+    tabuladorNomina: [],
     filtroHabEstado: 'Todas',
     filtroHabTexto: '',
     filtroResEstado: 'Todas',
@@ -182,10 +183,11 @@ async function iniciarSesionUI(data) {
         document.getElementById('navGerencia').classList.remove('oculto');
         document.getElementById('navRecepcion').classList.remove('oculto');
         document.getElementById('navCalendario').classList.remove('oculto');
+        document.getElementById('navRRHH').classList.remove('oculto');
         document.getElementById('btnNuevaReservaTop').classList.remove('oculto');
 
         cambiarVista('vistaGerencia');
-        await Promise.all([cargarGraficos(), cargarHabitaciones(), cargarPaquetes(), cargarReservaciones()]);
+        await Promise.all([cargarGraficos(), cargarHabitaciones(), cargarPaquetes(), cargarReservaciones(), cargarNominas()]);
     } else if (data.rol === 'Recepcion') {
         document.getElementById('navRecepcion').classList.remove('oculto');
         document.getElementById('navCalendario').classList.remove('oculto');
@@ -206,7 +208,7 @@ function cambiarVista(vistaId) {
         vistaGerencia: ['Panel Gerencial', 'Indicadores financieros, ocupación y rendimiento en tiempo real'],
         vistaRecepcion: ['Habitaciones & Front Desk', 'Control operativo de disponibilidad, Check-In y Check-Out'],
         vistaCalendario: ['Calendario de Reservaciones', 'Agenda interactiva de estancias futuras y control de traslapes'],
-        vistaRRHH: ['Nóminas & Personal', 'Consulta salarial y registro de colaboradores']
+        vistaRRHH: ['Nóminas & Personal', 'Consulta salarial, edición y registro de colaboradores']
     };
 
     ['vistaGerencia', 'vistaRecepcion', 'vistaCalendario', 'vistaRRHH'].forEach(id => {
@@ -895,11 +897,24 @@ async function refrescarDatosOperativos() {
 }
 
 // ==========================================
-// 5. RECURSOS HUMANOS (NÓMINAS Y EMPLEADOS)
+// 5. RECURSOS HUMANOS (NÓMINAS, ALTAS Y EDICIÓN)
 // ==========================================
+async function cargarTabuladorNomina() {
+    try {
+        const res = await fetch('/api/tabulador-nomina');
+        if (!res.ok) return;
+        state.tabuladorNomina = await res.json();
+    } catch (error) {
+        console.error('Error cargando tabulador salarial:', error);
+    }
+}
+
 async function cargarNominas() {
     try {
-        const res = await fetch('/api/nominas');
+        const [res] = await Promise.all([
+            fetch('/api/nominas'),
+            cargarTabuladorNomina()
+        ]);
         if (!res.ok) throw new Error('Error al consultar nóminas');
         const nominas = await res.json();
         state.nominas = nominas;
@@ -919,11 +934,115 @@ async function cargarNominas() {
                 <td>${escapeHtml(nom.correo)}</td>
                 <td><span class="badge badge-confirmada">${escapeHtml(nom.rol)}</span></td>
                 <td class="tabular-nums"><strong>${formatMXN(nom.sueldo)}</strong></td>
+                <td>
+                    <div class="action-group">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="abrirModalEditarEmpleado(${nom.id_empleado})">
+                            Editar
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="eliminarEmpleado(${nom.id_empleado})">
+                            Baja
+                        </button>
+                    </div>
+                </td>
             </tr>
         `).join('');
     } catch (error) {
         console.error('Error cargando nóminas', error);
         mostrarToast('No se pudieron cargar las nóminas', 'error');
+    }
+}
+
+function abrirModalEditarEmpleado(id_empleado) {
+    const emp = state.nominas.find(n => n.id_empleado === id_empleado);
+    if (!emp) return;
+
+    document.getElementById('errorEditarEmpleado').classList.add('oculto');
+    document.getElementById('tituloModalEditarEmp').textContent = `Editar Colaborador #${emp.id_empleado}`;
+    document.getElementById('editEmpId').value = emp.id_empleado;
+    document.getElementById('editEmpNombre').value = emp.nombre || '';
+    document.getElementById('editEmpApellido').value = emp.apellido || '';
+    document.getElementById('editEmpCorreo').value = emp.correo || '';
+    document.getElementById('editEmpRol').value = emp.rol || 'Recepcion';
+    document.getElementById('editEmpSueldo').value = Number(emp.sueldo || 0).toFixed(2);
+    document.getElementById('editEmpPassword').value = '';
+
+    abrirModal('modalEditarEmpleado');
+}
+
+// Autocompletar sueldo sugerido al cambiar de rol en el modal de edición
+document.getElementById('editEmpRol').addEventListener('change', (e) => {
+    const rolSeleccionado = e.target.value;
+    const puesto = state.tabuladorNomina.find(t => t.tipo_puesto === rolSeleccionado);
+    if (puesto) {
+        document.getElementById('editEmpSueldo').value = Number(puesto.sueldo).toFixed(2);
+    }
+});
+
+document.getElementById('formEditarEmpleado').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errBox = document.getElementById('errorEditarEmpleado');
+    const btn = document.getElementById('btnGuardarEdicionEmp');
+    errBox.classList.add('oculto');
+
+    const id = document.getElementById('editEmpId').value;
+    const payload = {
+        nombre: document.getElementById('editEmpNombre').value.trim(),
+        apellido: document.getElementById('editEmpApellido').value.trim(),
+        correo: document.getElementById('editEmpCorreo').value.trim(),
+        rol: document.getElementById('editEmpRol').value,
+        sueldo: document.getElementById('editEmpSueldo').value,
+        password: document.getElementById('editEmpPassword').value
+    };
+
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+
+    try {
+        const res = await fetch(`/api/empleados/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            errBox.textContent = data.error || 'No se pudo actualizar el colaborador';
+            errBox.classList.remove('oculto');
+            return;
+        }
+
+        cerrarModal('modalEditarEmpleado');
+        mostrarToast(data.message || 'Colaborador actualizado correctamente', 'success');
+        await cargarNominas();
+    } catch (error) {
+        console.error('Error editando empleado:', error);
+        errBox.textContent = 'Error de comunicación con el servidor.';
+        errBox.classList.remove('oculto');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Guardar Cambios';
+    }
+});
+
+async function eliminarEmpleado(id_empleado) {
+    const emp = state.nominas.find(n => n.id_empleado === id_empleado);
+    const nombre = emp ? `${emp.nombre} ${emp.apellido}` : `#${id_empleado}`;
+    if (!confirm(`¿Confirmas dar de baja al colaborador ${nombre}?`)) return;
+
+    try {
+        const res = await fetch(`/api/empleados/${id_empleado}`, { method: 'DELETE' });
+        const data = await res.json();
+
+        if (!res.ok) {
+            mostrarToast(data.error || 'No se pudo dar de baja al colaborador', 'error');
+            return;
+        }
+
+        mostrarToast(data.message || 'Colaborador dado de baja', 'info');
+        await cargarNominas();
+    } catch (error) {
+        console.error('Error eliminando empleado:', error);
+        mostrarToast('Error de comunicación al eliminar colaborador', 'error');
     }
 }
 
